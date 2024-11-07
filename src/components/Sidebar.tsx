@@ -3,6 +3,7 @@
 import { Package, Truck, ShoppingBag, Users, ClipboardList, BarChart2 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import Image from "next/image"
 
 const sidebarItems = [
   { href: "/", icon: BarChart2, label: "Dashboard" },
@@ -19,7 +20,12 @@ export default function Sidebar() {
 
   return (
     <aside className="bg-gray-800 text-white w-64 space-y-6 py-7 px-2 absolute inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 transition duration-200 ease-in-out">
-      <h1 className="text-orange-500 text-2xl font-bold text-center">Alenort</h1> {/* Título en naranja */}
+      <Image 
+        src="/alenort logo.png" 
+        alt="Logo de Alenort" 
+        width={200} 
+        height={100} 
+      />
       <nav>
         {sidebarItems.map((item) => {
           const Icon = item.icon

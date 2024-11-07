@@ -1,6 +1,6 @@
 import { Metadata } from 'next'
 import { Inter } from 'next/font/google'
-import './globals.css'
+import '@/styles/globals.css'
 import Sidebar from '../components/Sidebar'
 import 'leaflet/dist/leaflet.css';
 

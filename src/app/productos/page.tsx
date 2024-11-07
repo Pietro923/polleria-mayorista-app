@@ -1,31 +1,61 @@
-"use client"
+"use client";
 
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card"; // Asegúrate de ajustar la importación según tu estructura
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
+
+interface Producto {
+  nombreProducto: string;
+  precio: string;
+  cantidad: string;
+}
 
 export default function ProductosPage() {
-  const [productos, setProductos] = useState<{ nombreProducto: string; precio: string; cantidad: string; }[]>([]);
+  const [productos, setProductos] = useState<Producto[]>([]);
   const [nombreProducto, setNombreProducto] = useState('');
   const [precio, setPrecio] = useState('');
   const [cantidad, setCantidad] = useState('');
+  const [editIndex, setEditIndex] = useState<number | null>(null);
 
   const agregarProducto = (e: React.FormEvent) => {
     e.preventDefault();
     const nuevoProducto = { nombreProducto, precio, cantidad };
-    setProductos([...productos, nuevoProducto]);
+
+    if (editIndex !== null) {
+      const productosActualizados = productos.map((producto, index) =>
+        index === editIndex ? nuevoProducto : producto
+      );
+      setProductos(productosActualizados);
+      setEditIndex(null);
+    } else {
+      setProductos([...productos, nuevoProducto]);
+    }
+
     setNombreProducto('');
     setPrecio('');
     setCantidad('');
+  };
+
+  const editarProducto = (index: number) => {
+    const producto = productos[index];
+    setNombreProducto(producto.nombreProducto);
+    setPrecio(producto.precio);
+    setCantidad(producto.cantidad);
+    setEditIndex(index);
+  };
+
+  const eliminarProducto = (index: number) => {
+    const productosActualizados = productos.filter((_, i) => i !== index);
+    setProductos(productosActualizados);
   };
 
   return (
     <div className="p-4 space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>Agregar Producto</CardTitle>
+          <CardTitle>{editIndex !== null ? "Editar Producto" : "Agregar Producto"}</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={agregarProducto} className="space-y-4">
@@ -63,7 +93,9 @@ export default function ProductosPage() {
                 min="1"
               />
             </div>
-            <Button type="submit">Agregar Producto</Button>
+            <Button type="submit">
+              {editIndex !== null ? "Actualizar Producto" : "Agregar Producto"}
+            </Button>
           </form>
         </CardContent>
       </Card>
@@ -79,9 +111,19 @@ export default function ProductosPage() {
             <ul className="space-y-2">
               {productos.map((producto, index) => (
                 <li key={index} className="flex justify-between items-center p-2 border rounded-md shadow-sm">
-                  <span>{producto.nombreProducto}</span>
-                  <span>${producto.precio}</span>
-                  <span>{producto.cantidad} unidades</span>
+                  <div>
+                    <span className="font-semibold">{producto.nombreProducto}</span> - 
+                    <span className="text-gray-600"> ${producto.precio}</span> - 
+                    <span className="text-gray-600"> {producto.cantidad} unidades</span>
+                  </div>
+                  <div className="space-x-2">
+                    <Button onClick={() => editarProducto(index)} size="sm" variant="outline">
+                      Editar
+                    </Button>
+                    <Button onClick={() => eliminarProducto(index)} size="sm" variant="destructive">
+                      Eliminar
+                    </Button>
+                  </div>
                 </li>
               ))}
             </ul>

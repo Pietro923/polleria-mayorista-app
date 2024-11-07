@@ -11,6 +11,7 @@ interface Cliente {
   nombreCliente: string;
   emailCliente: string;
   telefonoCliente: string;
+  direccionCliente: string;
 }
 
 export default function ClientesPage() {
@@ -18,14 +19,31 @@ export default function ClientesPage() {
   const [nombreCliente, setNombreCliente] = useState("");
   const [emailCliente, setEmailCliente] = useState("");
   const [telefonoCliente, setTelefonoCliente] = useState("");
+  const [direccionCliente, setdireccionCliente] = useState("");
 
   const agregarCliente = (e: React.FormEvent) => {
     e.preventDefault();
-    const nuevoCliente: Cliente = { nombreCliente, emailCliente, telefonoCliente };
+    const nuevoCliente: Cliente = { nombreCliente, emailCliente, telefonoCliente, direccionCliente };
     setClientes([...clientes, nuevoCliente]);
     setNombreCliente("");
     setEmailCliente("");
     setTelefonoCliente("");
+    setdireccionCliente("");
+  };
+
+  const eliminarCliente = (index: number) => {
+    const nuevosClientes = [...clientes];
+    nuevosClientes.splice(index, 1);
+    setClientes(nuevosClientes);
+  };
+
+  const editarCliente = (index: number) => {
+    const cliente = clientes[index];
+    setNombreCliente(cliente.nombreCliente);
+    setEmailCliente(cliente.emailCliente);
+    setTelefonoCliente(cliente.telefonoCliente);
+    setdireccionCliente(cliente.direccionCliente);
+    eliminarCliente(index); // Elimina temporalmente el cliente para poder editar y guardar como nuevo.
   };
 
   return (
@@ -69,6 +87,16 @@ export default function ClientesPage() {
                 required
               />
             </div>
+            <div className="mb-4">
+              <Label htmlFor="direccionCliente">Dirección</Label>
+              <Input
+                id="direccionCliente"
+                value={direccionCliente}
+                onChange={(e) => setdireccionCliente(e.target.value)}
+                placeholder="Dirección"
+                required
+              />
+            </div>
             <Button type="submit">Agregar Cliente</Button>
           </form>
         </CardContent>
@@ -86,11 +114,22 @@ export default function ClientesPage() {
               {clientes.map((cliente, index) => (
                 <div
                   key={index}
-                  className="border border-gray-300 rounded-lg p-4 shadow-md hover:shadow-lg transition-shadow"
+                  className="flex justify-between items-center border border-gray-300 rounded-lg p-4 shadow-md hover:shadow-lg transition-shadow"
                 >
-                  <h3 className="text-lg font-semibold">{cliente.nombreCliente}</h3>
-                  <p className="text-sm text-gray-600">📧 {cliente.emailCliente}</p>
-                  <p className="text-sm text-gray-600">📞 {cliente.telefonoCliente}</p>
+                  <div>
+                    <h3 className="text-lg font-semibold">{cliente.nombreCliente}</h3>
+                    <p className="text-sm text-gray-600">📧 {cliente.emailCliente}</p>
+                    <p className="text-sm text-gray-600">📞 {cliente.telefonoCliente}</p>
+                    <p className="text-sm text-gray-600">📍 {cliente.direccionCliente}</p>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button onClick={() => editarCliente(index)} variant="secondary">
+                      Editar
+                    </Button>
+                    <Button onClick={() => eliminarCliente(index)} variant="destructive">
+                      Eliminar
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
