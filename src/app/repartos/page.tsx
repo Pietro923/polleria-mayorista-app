@@ -19,6 +19,10 @@ import {
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib"; // Importación de pdf-lib
 import "leaflet/dist/leaflet.css"; // Importa los estilos de Leaflet
 
+// Firebase
+import { collection, getDocs, addDoc } from "firebase/firestore";
+import { db} from "@/lib/firebaseConfig"; // Asegúrate de tener la configuración de Firebase
+
 // Importación dinámica de react-leaflet para evitar errores en SSR
 const MapContainer = dynamic(() => import("react-leaflet").then(mod => mod.MapContainer), { ssr: false });
 const TileLayer = dynamic(() => import("react-leaflet").then(mod => mod.TileLayer), { ssr: false });
@@ -56,8 +60,20 @@ export default function RepartoForm() {
         const { lat, lon } = data[0];
         const newPosition: LatLngExpression = [parseFloat(lat), parseFloat(lon)];
 
+        // Guardar en el estado
         setUbicaciones([...ubicaciones, { repartidor, direccion, fechaEntrega, lat: parseFloat(lat), lon: parseFloat(lon) }]);
         setPosition(newPosition);
+
+        // Guardar en Firebase
+        await addDoc(collection(db, "Reparto"), {
+          repartidor,
+          direccion,
+          fechaEntrega,
+          lat: parseFloat(lat),
+          lon: parseFloat(lon),
+        });
+
+        alert("Entrega registrada con éxito");
       } else {
         alert("Dirección no encontrada");
       }
@@ -65,7 +81,8 @@ export default function RepartoForm() {
       console.error("Error al buscar la dirección:", error);
     }
   };
-const handleDownloadPDF = async () => {
+
+  const handleDownloadPDF = async () => {
     const pdfDoc = await PDFDocument.create();
     const page = pdfDoc.addPage([600, 400]);
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
@@ -102,6 +119,7 @@ const handleDownloadPDF = async () => {
     a.download = "hoja_de_ruta.pdf";
     a.click();
   };
+
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">Formulario de Reparto</h1>
@@ -181,10 +199,10 @@ const handleDownloadPDF = async () => {
               ))}
             </TableBody>
           </Table>
-          <Button onClick={handleDownloadPDF} className="mt-4">
-            Descargar Hoja de Ruta
-          </Button>
         </CardContent>
+        <CardFooter>
+          <Button onClick={handleDownloadPDF}>Generar PDF</Button>
+        </CardFooter>
       </Card>
     </div>
   );
