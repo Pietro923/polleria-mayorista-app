@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
-import { MapContainer, TileLayer, Marker } from "react-leaflet";
+import dynamic from "next/dynamic";
 import L, { LatLngExpression } from "leaflet";
 import {
   Table,
@@ -17,6 +17,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib"; // Importación de pdf-lib
+import "leaflet/dist/leaflet.css"; // Importa los estilos de Leaflet
+
+// Importación dinámica de react-leaflet para evitar errores en SSR
+const MapContainer = dynamic(() => import("react-leaflet").then(mod => mod.MapContainer), { ssr: false });
+const TileLayer = dynamic(() => import("react-leaflet").then(mod => mod.TileLayer), { ssr: false });
+const Marker = dynamic(() => import("react-leaflet").then(mod => mod.Marker), { ssr: false });
 
 const customMarker = new L.Icon({
   iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
@@ -53,19 +59,13 @@ export default function RepartoForm() {
         setUbicaciones([...ubicaciones, { repartidor, direccion, fechaEntrega, lat: parseFloat(lat), lon: parseFloat(lon) }]);
         setPosition(newPosition);
       } else {
-        alert('Dirección no encontrada');
+        alert("Dirección no encontrada");
       }
     } catch (error) {
-      console.error('Error al buscar la dirección:', error);
-      alert('No se pudo buscar la dirección');
+      console.error("Error al buscar la dirección:", error);
     }
-
-    setRepartidor("");
-    setDireccion("");
-    setFechaEntrega("");
   };
-
-  const handleDownloadPDF = async () => {
+const handleDownloadPDF = async () => {
     const pdfDoc = await PDFDocument.create();
     const page = pdfDoc.addPage([600, 400]);
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
@@ -102,71 +102,60 @@ export default function RepartoForm() {
     a.download = "hoja_de_ruta.pdf";
     a.click();
   };
-
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Registrar Reparto</h1>
-
-      <Card>
+      <h1 className="text-2xl font-bold mb-4">Formulario de Reparto</h1>
+      <Card className="mb-8">
         <CardHeader>
-          <h2 className="text-xl font-semibold">Nuevo Reparto</h2>
+          <h2 className="text-xl font-semibold">Agregar Entrega</h2>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="repartidor">Repartidor:</Label>
-              <Input
-                id="repartidor"
-                value={repartidor}
-                onChange={(e) => setRepartidor(e.target.value)}
-                placeholder="Nombre del repartidor"
-                required
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="direccion">Dirección de Entrega:</Label>
-              <Input
-                id="direccion"
-                value={direccion}
-                onChange={(e) => setDireccion(e.target.value)}
-                placeholder="Dirección de entrega"
-                required
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="fechaEntrega">Fecha de Entrega:</Label>
-              <Input
-                id="fechaEntrega"
-                type="date"
-                value={fechaEntrega}
-                onChange={(e) => setFechaEntrega(e.target.value)}
-                required
-              />
-            </div>
-
-            <Button type="submit">Registrar Reparto</Button>
+          <form onSubmit={handleSubmit}>
+            <Label htmlFor="repartidor">Repartidor</Label>
+            <Input
+              id="repartidor"
+              value={repartidor}
+              onChange={(e) => setRepartidor(e.target.value)}
+              placeholder="Nombre del repartidor"
+              className="mb-4"
+              required
+            />
+            <Label htmlFor="direccion">Dirección</Label>
+            <Input
+              id="direccion"
+              value={direccion}
+              onChange={(e) => setDireccion(e.target.value)}
+              placeholder="Dirección de entrega"
+              className="mb-4"
+              required
+            />
+            <Label htmlFor="fechaEntrega">Fecha de Entrega</Label>
+            <Input
+              id="fechaEntrega"
+              type="date"
+              value={fechaEntrega}
+              onChange={(e) => setFechaEntrega(e.target.value)}
+              className="mb-4"
+              required
+            />
+            <Button type="submit">Agregar Entrega</Button>
           </form>
         </CardContent>
-        <CardFooter>
-          <div className="w-full h-64 mt-4">
-            <MapContainer
-              center={position}
-              zoom={13}
-              scrollWheelZoom={false}
-              className="h-full w-full rounded-md"
-            >
-              <TileLayer
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              {ubicaciones.map((ubicacion, index) => (
-                <Marker key={index} position={[ubicacion.lat, ubicacion.lon]} icon={customMarker} />
-              ))}
-            </MapContainer>
-          </div>
-        </CardFooter>
       </Card>
+      <h2 className="text-xl font-semibold mb-4">Mapa de Entregas</h2>
+      <MapContainer center={position} zoom={13} style={{ height: "400px", width: "100%" }}>
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        />
+        {ubicaciones.map((ubicacion, index) => (
+          <Marker
+            key={index}
+            position={[ubicacion.lat, ubicacion.lon]}
+            icon={customMarker}
+          />
+        ))}
+      </MapContainer>
 
       <Card className="mt-6">
         <CardHeader>
