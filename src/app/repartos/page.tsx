@@ -1,5 +1,4 @@
-"use client";
-
+"use client"
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,23 +6,14 @@ import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
 import dynamic from "next/dynamic";
 import L, { LatLngExpression } from "leaflet";
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { PDFDocument, rgb, StandardFonts } from "pdf-lib"; // Importación de pdf-lib
-import "leaflet/dist/leaflet.css"; // Importa los estilos de Leaflet
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import "leaflet/dist/leaflet.css"; 
 
 // Firebase
-import { collection, getDocs, addDoc } from "firebase/firestore";
-import { db} from "@/lib/firebaseConfig"; // Asegúrate de tener la configuración de Firebase
+import { collection, addDoc, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebaseConfig"; 
 
-// Importación dinámica de react-leaflet para evitar errores en SSR
 const MapContainer = dynamic(() => import("react-leaflet").then(mod => mod.MapContainer), { ssr: false });
 const TileLayer = dynamic(() => import("react-leaflet").then(mod => mod.TileLayer), { ssr: false });
 const Marker = dynamic(() => import("react-leaflet").then(mod => mod.Marker), { ssr: false });
@@ -45,6 +35,29 @@ export default function RepartoForm() {
   >([]);
   const [position, setPosition] = useState<LatLngExpression>([-26.8241, -65.2226]);
 
+  useEffect(() => {
+    // Función para obtener los Reparto desde Firebase
+    const fetchReparto = async () => {
+      const querySnapshot = await getDocs(collection(db, "Reparto"));
+      const RepartoData: Array<{ repartidor: string; direccion: string; fechaEntrega: string; lat: number; lon: number }> = [];
+
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        RepartoData.push({
+          repartidor: data.repartidor,
+          direccion: data.direccion,
+          fechaEntrega: data.fechaEntrega,
+          lat: data.lat,
+          lon: data.lon,
+        });
+      });
+
+      setUbicaciones(RepartoData);
+    };
+
+    fetchReparto();
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -60,11 +73,12 @@ export default function RepartoForm() {
         const { lat, lon } = data[0];
         const newPosition: LatLngExpression = [parseFloat(lat), parseFloat(lon)];
 
-        // Guardar en el estado
-        setUbicaciones([...ubicaciones, { repartidor, direccion, fechaEntrega, lat: parseFloat(lat), lon: parseFloat(lon) }]);
+        setUbicaciones([
+          ...ubicaciones,
+          { repartidor, direccion, fechaEntrega, lat: parseFloat(lat), lon: parseFloat(lon) },
+        ]);
         setPosition(newPosition);
 
-        // Guardar en Firebase
         await addDoc(collection(db, "Reparto"), {
           repartidor,
           direccion,
@@ -84,30 +98,101 @@ export default function RepartoForm() {
 
   const handleDownloadPDF = async () => {
     const pdfDoc = await PDFDocument.create();
-    const page = pdfDoc.addPage([600, 400]);
+    const page = pdfDoc.addPage([600, 800]);
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const fontSize = 12;
-    let yOffset = 350;
+    const headerFontSize = 16;
+    let yOffset = 750;
 
+    // Título del PDF
     page.drawText("Hoja de Ruta", {
       x: 50,
       y: yOffset,
-      size: 18,
+      size: headerFontSize,
       font,
       color: rgb(0, 0, 0),
     });
 
     yOffset -= 30;
+
+    // Información del encabezado (más detallada)
+    page.drawText("Fecha de Generación: " + new Date().toLocaleDateString(), {
+      x: 50,
+      y: yOffset,
+      size: fontSize,
+      font,
+      color: rgb(0, 0, 0),
+    });
+
+    yOffset -= 30;
+
+    // Tablón con la información de las entregas
+    page.drawText("Entregas Registradas", {
+      x: 50,
+      y: yOffset,
+      size: headerFontSize,
+      font,
+      color: rgb(0, 0, 0),
+    });
+
+    yOffset -= 20;
+
+    // Columnas de la tabla
+    page.drawText("Repartidor", {
+      x: 50,
+      y: yOffset,
+      size: fontSize,
+      font,
+      color: rgb(0, 0, 0),
+    });
+    page.drawText("Dirección", {
+      x: 150,
+      y: yOffset,
+      size: fontSize,
+      font,
+      color: rgb(0, 0, 0),
+    });
+    page.drawText("Fecha de Entrega", {
+      x: 300,
+      y: yOffset,
+      size: fontSize,
+      font,
+      color: rgb(0, 0, 0),
+    });
+
+    yOffset -= 20;
+
+    // Listado de entregas
     ubicaciones.forEach((ubicacion, index) => {
-      page.drawText(
-        `${index + 1}. Repartidor: ${ubicacion.repartidor}, Dirección: ${ubicacion.direccion}, Fecha: ${ubicacion.fechaEntrega}`,
-        {
-          x: 50,
-          y: yOffset,
-          size: fontSize,
-          font,
-        }
-      );
+      page.drawText(`${index + 1}.`, {
+        x: 50,
+        y: yOffset,
+        size: fontSize,
+        font,
+        color: rgb(0, 0, 0),
+      });
+      page.drawText(ubicacion.repartidor, {
+        x: 70,
+        y: yOffset,
+        size: fontSize,
+        font,
+        color: rgb(0, 0, 0),
+      });
+      page.drawText(ubicacion.direccion, {
+        x: 150,
+        y: yOffset,
+        size: fontSize,
+        font,
+        color: rgb(0, 0, 0),
+      });
+      page.drawText(ubicacion.fechaEntrega, {
+        x: 300,
+        y: yOffset,
+        size: fontSize,
+        font,
+        color: rgb(0, 0, 0),
+      });
+
       yOffset -= 20;
     });
 
@@ -167,21 +252,17 @@ export default function RepartoForm() {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
         {ubicaciones.map((ubicacion, index) => (
-          <Marker
-            key={index}
-            position={[ubicacion.lat, ubicacion.lon]}
-            icon={customMarker}
-          />
+          <Marker key={index} position={[ubicacion.lat, ubicacion.lon]} icon={customMarker}>
+            <div>{ubicacion.repartidor}</div>
+          </Marker>
         ))}
       </MapContainer>
-
-      <Card className="mt-6">
+      <Card className="mt-8">
         <CardHeader>
-          <h2 className="text-xl font-semibold">Ubicaciones Registradas</h2>
+          <h2 className="text-xl font-semibold">Entregas Registradas</h2>
         </CardHeader>
         <CardContent>
           <Table>
-            <TableCaption>Listado de repartos registrados</TableCaption>
             <TableHeader>
               <TableRow>
                 <TableHead>Repartidor</TableHead>
@@ -201,7 +282,7 @@ export default function RepartoForm() {
           </Table>
         </CardContent>
         <CardFooter>
-          <Button onClick={handleDownloadPDF}>Generar PDF</Button>
+          <Button onClick={handleDownloadPDF}>Descargar PDF</Button>
         </CardFooter>
       </Card>
     </div>

@@ -16,6 +16,7 @@ export default function NewOrderForm() {
   const [fechaEntrega, setFechaEntrega] = useState("");
   const [clientes, setClientes] = useState<any[]>([]);
   const [productos, setProductos] = useState<any[]>([]);
+  const [direccionCliente, setDireccionCliente] = useState(""); // Estado para la dirección del cliente
 
   // Obtener clientes desde la base de datos
   useEffect(() => {
@@ -23,7 +24,7 @@ export default function NewOrderForm() {
       const querySnapshot = await getDocs(collection(db, "Clientes"));
       const clientesObtenidos: any[] = [];
       querySnapshot.forEach((doc) => {
-        clientesObtenidos.push(doc.data());
+        clientesObtenidos.push({ id: doc.id, ...doc.data() });
       });
       setClientes(clientesObtenidos);
     };
@@ -72,6 +73,15 @@ export default function NewOrderForm() {
     }
   };
 
+  // Función para manejar el cambio de cliente y obtener la dirección
+  const handleClienteChange = async (value: string) => {
+    setCliente(value);
+    const clienteSeleccionado = clientes.find((cliente) => cliente.nombreCliente === value);
+    if (clienteSeleccionado) {
+      setDireccionCliente(clienteSeleccionado.direccionCliente); // Asigna la dirección del cliente seleccionado
+    }
+  };
+
   // Función para manejar el envío del formulario
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,6 +95,7 @@ export default function NewOrderForm() {
         producto: producto,
         cantidad: cantidad,
         fechaEntrega: fechaEntrega,
+        direccionCliente: direccionCliente, // Incluye la dirección en el pedido
       };
 
       // Guardar el pedido en la colección Pedidos
@@ -97,6 +108,7 @@ export default function NewOrderForm() {
       setProducto("");
       setCantidad(1);
       setFechaEntrega("");
+      setDireccionCliente(""); // Resetear la dirección
     } catch (error) {
       console.error("Error al registrar el pedido:", error);
     }
@@ -115,7 +127,7 @@ export default function NewOrderForm() {
             <div>
               <Label htmlFor="cliente">Cliente:</Label>
               <Select
-                onValueChange={(value) => setCliente(value)}
+                onValueChange={handleClienteChange} // Usar la función modificada
                 value={cliente}
                 required
               >
