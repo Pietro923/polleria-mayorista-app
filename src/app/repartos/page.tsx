@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import L, { LatLngExpression } from "leaflet";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import "leaflet/dist/leaflet.css"; 
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Firebase
 import { collection, addDoc, getDocs } from "firebase/firestore";
@@ -29,14 +30,31 @@ const customMarker = new L.Icon({
 export default function RepartoForm() {
   const [repartidor, setRepartidor] = useState("");
   const [direccion, setDireccion] = useState("");
-  const [fechaEntrega, setFechaEntrega] = useState("");
+  const [fechaEntrega, setFechaEntrega] = useState<string>(new Date().toISOString().split('T')[0]); // Preestablecer la fecha actual
   const [ubicaciones, setUbicaciones] = useState<
     Array<{ repartidor: string; direccion: string; fechaEntrega: string; lat: number; lon: number }>
   >([]);
+  const [repartidores, setRepartidores] = useState<string[]>([]); // Nuevo estado para los repartidores
   const [position, setPosition] = useState<LatLngExpression>([-26.8241, -65.2226]);
+  
 
   useEffect(() => {
-    // Función para obtener los Reparto desde Firebase
+    // Obtener los repartidores de la colección "Repartidores"
+    const fetchRepartidores = async () => {
+      const querySnapshot = await getDocs(collection(db, "Repartidores"));
+      const repartidoresData: string[] = [];
+
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        repartidoresData.push(data.Nombre); // Suponiendo que el campo "Nombre" existe en cada documento
+      });
+
+      setRepartidores(repartidoresData);
+    };
+
+    fetchRepartidores();
+
+    // Función para obtener los Repartos desde Firebase
     const fetchReparto = async () => {
       const querySnapshot = await getDocs(collection(db, "Reparto"));
       const RepartoData: Array<{ repartidor: string; direccion: string; fechaEntrega: string; lat: number; lon: number }> = [];
@@ -214,24 +232,34 @@ export default function RepartoForm() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit}>
-            <Label htmlFor="repartidor">Repartidor</Label>
-            <Input
-              id="repartidor"
-              value={repartidor}
-              onChange={(e) => setRepartidor(e.target.value)}
-              placeholder="Nombre del repartidor"
-              className="mb-4"
-              required
-            />
-            <Label htmlFor="direccion">Dirección</Label>
-            <Input
-              id="direccion"
-              value={direccion}
-              onChange={(e) => setDireccion(e.target.value)}
-              placeholder="Dirección de entrega"
-              className="mb-4"
-              required
-            />
+            <div className="mb-4">
+              <Label htmlFor="repartidor">Repartidor</Label>
+              <Select value={repartidor} onValueChange={setRepartidor} required>
+                <SelectTrigger className="w-full p-2 border rounded">
+                  <SelectValue placeholder="Seleccione un repartidor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {repartidores.map((repartidor, index) => (
+                    <SelectItem key={index} value={repartidor}>
+                      {repartidor}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="mb-4">
+              <Label htmlFor="direccion">Dirección</Label>
+              <Input
+                id="direccion"
+                value={direccion}
+                onChange={(e) => setDireccion(e.target.value)}
+                required
+                className="w-full"
+              />
+            </div>
+
+            <div className="mb-4">
             <Label htmlFor="fechaEntrega">Fecha de Entrega</Label>
             <Input
               id="fechaEntrega"
@@ -241,25 +269,30 @@ export default function RepartoForm() {
               className="mb-4"
               required
             />
-            <Button type="submit">Agregar Entrega</Button>
+            </div>
+
+            <Button type="submit">Registrar</Button>
           </form>
         </CardContent>
       </Card>
-      <h2 className="text-xl font-semibold mb-4">Mapa de Entregas</h2>
+
       <MapContainer center={position} zoom={13} style={{ height: "400px", width: "100%" }}>
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
         {ubicaciones.map((ubicacion, index) => (
-          <Marker key={index} position={[ubicacion.lat, ubicacion.lon]} icon={customMarker}>
-            <div>{ubicacion.repartidor}</div>
-          </Marker>
+          <Marker
+            key={index}
+            position={[ubicacion.lat, ubicacion.lon]}
+            icon={customMarker}
+          />
         ))}
       </MapContainer>
-      <Card className="mt-8">
+
+      <Card className="mt-8 ">
         <CardHeader>
-          <h2 className="text-xl font-semibold">Entregas Registradas</h2>
+          <h2 className="text-xl font-semibold">Repartos Registrados</h2>
         </CardHeader>
         <CardContent>
           <Table>
@@ -280,11 +313,15 @@ export default function RepartoForm() {
               ))}
             </TableBody>
           </Table>
+          
         </CardContent>
-        <CardFooter>
-          <Button onClick={handleDownloadPDF}>Descargar PDF</Button>
-        </CardFooter>
+        
       </Card>
+
+      <CardFooter className="mt-3">
+        <Button onClick={handleDownloadPDF}>Generar PDF</Button>
+      </CardFooter>
+
     </div>
   );
 }
