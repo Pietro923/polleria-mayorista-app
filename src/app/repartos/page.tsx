@@ -12,7 +12,7 @@ import "leaflet/dist/leaflet.css";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Firebase
-import { collection, addDoc, getDocs } from "firebase/firestore";
+import { collection, addDoc, getDocs, query } from "firebase/firestore";
 import { db } from "@/lib/firebaseConfig"; 
 
 const MapContainer = dynamic(() => import("react-leaflet").then(mod => mod.MapContainer), { ssr: false });
@@ -29,32 +29,52 @@ const customMarker = new L.Icon({
 
 export default function RepartoForm() {
   const [repartidor, setRepartidor] = useState("");
+  const [pedidoSeleccionado, setPedidoSeleccionado] = useState<any>(null);
   const [direccion, setDireccion] = useState("");
-  const [fechaEntrega, setFechaEntrega] = useState<string>(new Date().toISOString().split('T')[0]); // Preestablecer la fecha actual
+  const [fechaEntrega, setFechaEntrega] = useState<string>(new Date().toISOString().split('T')[0]);
   const [ubicaciones, setUbicaciones] = useState<
     Array<{ repartidor: string; direccion: string; fechaEntrega: string; lat: number; lon: number }>
   >([]);
-  const [repartidores, setRepartidores] = useState<string[]>([]); // Nuevo estado para los repartidores
+  const [repartidores, setRepartidores] = useState<string[]>([]);
+  const [pedidos, setPedidos] = useState<any[]>([]);
   const [position, setPosition] = useState<LatLngExpression>([-26.8241, -65.2226]);
-  
 
   useEffect(() => {
-    // Obtener los repartidores de la colección "Repartidores"
+    // Fetch repartidores
     const fetchRepartidores = async () => {
       const querySnapshot = await getDocs(collection(db, "Repartidores"));
       const repartidoresData: string[] = [];
 
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        repartidoresData.push(data.Nombre); // Suponiendo que el campo "Nombre" existe en cada documento
+        repartidoresData.push(data.Nombre);
       });
 
       setRepartidores(repartidoresData);
     };
 
-    fetchRepartidores();
+    // Fetch pedidos 
+    const fetchPedidosSinReparto = async () => {
+      const q = query(collection(db, "Pedidos"));
+      const querySnapshot = await getDocs(q);
+      const pedidosData: any[] = [];
 
-    // Función para obtener los Repartos desde Firebase
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        pedidosData.push({
+          id: doc.id,
+          cantidad: data.cantidad,
+          cliente: data.cliente,
+          direccionCliente: data.direccionCliente,
+          fechaEntrega: data.fechaEntrega,
+          producto: data.producto
+        });
+      });
+
+      setPedidos(pedidosData);
+    };
+
+    // Fetch existing repartos
     const fetchReparto = async () => {
       const querySnapshot = await getDocs(collection(db, "Reparto"));
       const RepartoData: Array<{ repartidor: string; direccion: string; fechaEntrega: string; lat: number; lon: number }> = [];
@@ -73,8 +93,16 @@ export default function RepartoForm() {
       setUbicaciones(RepartoData);
     };
 
+    fetchRepartidores();
+    fetchPedidosSinReparto();
     fetchReparto();
   }, []);
+
+  const handlePedidoSelect = (pedidoId: string) => {
+    const pedido = pedidos.find(p => p.id === pedidoId);
+    setPedidoSeleccionado(pedido);
+    setDireccion(pedido.direccionCliente); // Changed from pedido.direccion to pedido.direccionCliente
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,21 +119,35 @@ export default function RepartoForm() {
         const { lat, lon } = data[0];
         const newPosition: LatLngExpression = [parseFloat(lat), parseFloat(lon)];
 
+        // Actualizar estado de ubicaciones
         setUbicaciones([
           ...ubicaciones,
           { repartidor, direccion, fechaEntrega, lat: parseFloat(lat), lon: parseFloat(lon) },
         ]);
         setPosition(newPosition);
 
+        // Guardar reparto en Firebase
         await addDoc(collection(db, "Reparto"), {
           repartidor,
           direccion,
           fechaEntrega,
           lat: parseFloat(lat),
           lon: parseFloat(lon),
+          pedidoId: pedidoSeleccionado?.id
         });
 
+        // Actualizar estado del pedido
+        if (pedidoSeleccionado) {
+          // Actualiza el pedido a "entregado" o el estado que corresponda
+          console.log("Actualizar estado del pedido:", pedidoSeleccionado.id);
+        }
+
         alert("Entrega registrada con éxito");
+        
+        // Resetear formulario
+        setRepartidor("");
+        setPedidoSeleccionado(null);
+        setDireccion("");
       } else {
         alert("Dirección no encontrada");
       }
@@ -219,28 +261,28 @@ export default function RepartoForm() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "hoja_de_ruta.pdf";
+    a.download = "Hoja_de_Ruta.pdf";
     a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Formulario de Reparto</h1>
-      <Card className="mb-8">
+    <div className="grid gap-4">
+      <Card>
         <CardHeader>
-          <h2 className="text-xl font-semibold">Agregar Entrega</h2>
+          <h2>Registro de Reparto</h2>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit}>
-            <div className="mb-4">
-              <Label htmlFor="repartidor">Repartidor</Label>
-              <Select value={repartidor} onValueChange={setRepartidor} required>
-                <SelectTrigger className="w-full p-2 border rounded">
-                  <SelectValue placeholder="Seleccione un repartidor" />
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label>Repartidor</Label>
+              <Select value={repartidor} onValueChange={setRepartidor}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona un repartidor" />
                 </SelectTrigger>
                 <SelectContent>
-                  {repartidores.map((repartidor, index) => (
-                    <SelectItem key={index} value={repartidor}>
+                  {repartidores.map((repartidor) => (
+                    <SelectItem key={repartidor} value={repartidor}>
                       {repartidor}
                     </SelectItem>
                   ))}
@@ -248,35 +290,49 @@ export default function RepartoForm() {
               </Select>
             </div>
 
-            <div className="mb-4">
-              <Label htmlFor="direccion">Dirección</Label>
+            <div>
+              <Label>Pedido</Label>
+              <Select value={pedidoSeleccionado?.id || ""} onValueChange={handlePedidoSelect}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona un pedido" />
+                </SelectTrigger>
+                <SelectContent>
+                  {pedidos.map((pedido) => (
+                    <SelectItem key={pedido.id} value={pedido.id}>
+                      {pedido.cliente} - {pedido.producto}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>Dirección</Label>
               <Input
-                id="direccion"
                 value={direccion}
                 onChange={(e) => setDireccion(e.target.value)}
-                required
-                className="w-full"
+                placeholder="Dirección de entrega"
               />
             </div>
 
-            <div className="mb-4">
-            <Label htmlFor="fechaEntrega">Fecha de Entrega</Label>
-            <Input
-              id="fechaEntrega"
-              type="date"
-              value={fechaEntrega}
-              onChange={(e) => setFechaEntrega(e.target.value)}
-              className="mb-4"
-              required
-            />
+            <div>
+              <Label>Fecha de Entrega</Label>
+              <Input
+                type="date"
+                value={fechaEntrega}
+                onChange={(e) => setFechaEntrega(e.target.value)}
+              />
             </div>
 
-            <Button type="submit">Registrar</Button>
+            <Button type="submit">Registrar Entrega</Button>
           </form>
         </CardContent>
+        <CardFooter>
+          <Button onClick={handleDownloadPDF}>Descargar PDF</Button>
+        </CardFooter>
       </Card>
 
-      <MapContainer center={position} zoom={13} style={{ height: "400px", width: "100%" }}>
+      <MapContainer center={position} zoom={13} style={{ height: "500px" }}>
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -286,13 +342,15 @@ export default function RepartoForm() {
             key={index}
             position={[ubicacion.lat, ubicacion.lon]}
             icon={customMarker}
-          />
+          >
+            <div>{`${ubicacion.repartidor} - ${ubicacion.direccion}`}</div>
+          </Marker>
         ))}
       </MapContainer>
 
-      <Card className="mt-8 ">
+      <Card>
         <CardHeader>
-          <h2 className="text-xl font-semibold">Repartos Registrados</h2>
+          <h2>Lista de Repartos</h2>
         </CardHeader>
         <CardContent>
           <Table>
@@ -313,15 +371,8 @@ export default function RepartoForm() {
               ))}
             </TableBody>
           </Table>
-          
         </CardContent>
-        
       </Card>
-
-      <CardFooter className="mt-3">
-        <Button onClick={handleDownloadPDF}>Generar PDF</Button>
-      </CardFooter>
-
     </div>
   );
 }
