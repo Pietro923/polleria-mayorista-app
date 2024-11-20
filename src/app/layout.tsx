@@ -7,6 +7,9 @@ import { onAuthStateChanged } from "firebase/auth";
 import { useEffect, useState } from 'react';
 import { auth, db } from "@/lib/firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
+import { Loader2 } from 'lucide-react';
+import { Card } from "@/components/ui/card";
+import { Toaster } from "@/components/ui/toaster";
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -44,8 +47,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     return (
       <html lang="es">
         <body className={inter.className}>
-          <div className="flex items-center justify-center h-screen bg-gray-100">
-            <p>Cargando...</p>
+          <div className="flex items-center justify-center h-screen bg-gradient-to-br from-primary/10 to-primary/20">
+            <Card className="p-8 flex flex-col items-center shadow-xl">
+              <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+              <p className="text-xl text-muted-foreground">Cargando aplicación...</p>
+            </Card>
           </div>
         </body>
       </html>
@@ -56,7 +62,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     return (
       <html lang="es">
         <body className={inter.className}>
-          <main className="h-screen flex items-center justify-center bg-gray-100">
+          <main className="h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/20">
             {children}
           </main>
         </body>
@@ -67,14 +73,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="es">
       <body className={inter.className}>
-        <div className="flex h-screen bg-gray-100">
-        <Sidebar role={role} />
+        <div className="flex h-screen bg-background">
+          <Sidebar role={role} />
           <div className="flex-1 flex flex-col overflow-hidden">
-            <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-200 p-6">
-              {children}
+            <main className="flex-1 overflow-x-hidden overflow-y-auto p-6 space-y-6">
+              <Card className="w-full p-6 min-h-full">
+                {children}
+              </Card>
             </main>
           </div>
         </div>
+        <Toaster />
       </body>
     </html>
   );

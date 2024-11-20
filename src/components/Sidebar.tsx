@@ -1,6 +1,8 @@
 "use client";
 import { Users, Calendar, BarChart2, DollarSign, Gift, BookOpen, LayoutDashboard, Clipboard, LogOut, ShoppingBag, Truck, Package, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "firebase/auth";
@@ -39,12 +41,13 @@ const sidebarItems: Record<Role, { href: string; icon: React.ElementType; label:
   Logistica: [
     { href: "/clientes", icon: Users, label: "Clientes" },
     { href: "/repartos", icon: Truck, label: "Repartos" },
+    { href: "/pedidos", icon: ShoppingBag, label: "Pedidos" },
+    
   ],
 };
 
 export default function Sidebar({ role }: { role: Role | null }) {
   const pathname = usePathname();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Estado para controlar la visibilidad del sidebar
   const [isAlertOpen, setIsAlertOpen] = useState(false);
 
   // Verificamos que el role sea válido antes de renderizar
@@ -56,70 +59,139 @@ export default function Sidebar({ role }: { role: Role | null }) {
 
   return (
     <>
-      {/* Botón para abrir o cerrar el Sidebar en pantallas pequeñas */}
-      <button
-        className="md:hidden p-2 text-white bg-gray-800 fixed top-4 left-4 z-50"
-        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-      >
-        ☰ {/* Ícono de menú */}
-      </button>
+      {/* Mobile Sidebar Toggle */}
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button variant="outline" className="md:hidden fixed top-4 left-4 z-50">
+            ☰
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="w-64 p-0">
+          <Card className="h-full rounded-none">
+            <CardContent className="pt-6 px-4 flex flex-col h-full">
+              <div className="text-center mb-6">
+                <Link href="/">
+                  <img
+                    src="/alenort logo.png"
+                    alt="Alenort Logo"
+                    className="h-32 mx-auto object-contain"
+                  />
+                </Link>
+              </div>
+              
+              <nav className="flex-grow space-y-2">
+                {sidebarItems[role].map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`flex items-center p-2 rounded-md transition duration-200 ${
+                        pathname === item.href 
+                          ? "bg-primary text-primary-foreground" 
+                          : "hover:bg-accent hover:text-accent-foreground"
+                      }`}
+                    >
+                      <Icon className="mr-3" size={18} />
+                      <span className="text-sm">{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </nav>
+              
+              <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+                <AlertDialogTrigger asChild>
+                  <Button 
+                    variant="destructive" 
+                    className="w-full mt-4 flex items-center justify-center"
+                    onClick={() => setIsAlertOpen(true)}
+                  >
+                    <LogOut className="mr-2" size={18} />
+                    Salir
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta acción cerrará tu sesión. ¿Quieres continuar?
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleLogout}>
+                      Continuar
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </CardContent>
+          </Card>
+        </SheetContent>
+      </Sheet>
 
-      {/* Sidebar */}
-      <aside
-        className={`bg-gray-800 text-white w-64 space-y-6 py-7 px-2 absolute inset-y-0 left-0 transform ${
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } md:relative md:translate-x-0 transition duration-200 ease-in-out z-40`}>
-        <div className="text-center mb-6">
-          <Link href="/">
-            <img
-              src="/alenort logo.png" // Asegúrate de que la ruta sea correcta
-              alt="Alenort Logo"
-              className="h-40 mx-auto"
-            />
-          </Link>
-        </div>
-        <nav>
-          {sidebarItems[role].map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`block py-2.5 px-4 rounded transition duration-200 ${
-                  pathname === item.href ? "bg-gray-700" : "hover:bg-gray-700"
-                }`}
-              >
-                <Icon className="inline-block mr-2" size={18} />
-                <span>{item.label}</span>
+      {/* Desktop Sidebar */}
+      <aside className="hidden md:block w-64 bg-background border-r">
+        <Card className="h-full rounded-none border-none">
+          <CardContent className="pt-6 px-4 flex flex-col h-full">
+            <div className="text-center mb-6">
+              <Link href="/">
+                <img
+                  src="/alenort logo.png"
+                  alt="Alenort Logo"
+                  className="h-32 mx-auto object-contain"
+                />
               </Link>
-            );
-          })}
-        </nav>
-        <div className="absolute bottom-6 left-0 w-full px-4">
-          <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
-            <AlertDialogTrigger asChild>
-              <Button
-                onClick={() => setIsAlertOpen(true)}
-                className="w-full flex items-center justify-center bg-red-600 hover:bg-red-700 text-white py-2 rounded"
-              >
-                <LogOut className="inline-block mr-2" size={18} />
-                Salir
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent className="bg-white rounded-lg shadow-lg p-6">
-              <AlertDialogHeader>
-                <AlertDialogTitle className="text-lg font-bold text-gray-800">¿Estás seguro?</AlertDialogTitle>
-                <AlertDialogDescription className="text-gray-600">
-                  Esta acción cerrará tu sesión. ¿Quieres continuar?
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel className="text-gray-500 hover:text-gray-700">Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={() => handleLogout()} className="bg-red-600 text-white hover:bg-red-700 rounded-md px-4 py-2">Continuar</AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
+            </div>
+            
+            <nav className="flex-grow space-y-2">
+              {sidebarItems[role].map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`flex items-center p-2 rounded-md transition duration-200 ${
+                      pathname === item.href 
+                        ? "bg-primary text-primary-foreground" 
+                        : "hover:bg-accent hover:text-accent-foreground"
+                    }`}
+                  >
+                    <Icon className="mr-3" size={18} />
+                    <span className="text-sm">{item.label}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+            
+            <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+              <AlertDialogTrigger asChild>
+                <Button 
+                  variant="destructive" 
+                  className="w-full mt-4 flex items-center justify-center"
+                  onClick={() => setIsAlertOpen(true)}
+                >
+                  <LogOut className="mr-2" size={18} />
+                  Salir
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="bg-white">
+                <AlertDialogHeader>
+                  <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta acción cerrará tu sesión. ¿Quieres continuar?
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleLogout}>
+                    Continuar
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </CardContent>
+        </Card>
       </aside>
     </>
   );
