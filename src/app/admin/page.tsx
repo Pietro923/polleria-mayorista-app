@@ -138,14 +138,23 @@ export default function Admin() {
       </h1>
 
       <Tabs defaultValue="vendedores" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="vendedores">
-            <Users className="mr-2 h-4 w-4" /> Vendedores
-          </TabsTrigger>
-          <TabsTrigger value="repartidores">
-            <Truck className="mr-2 h-4 w-4" /> Repartidores
-          </TabsTrigger>
-        </TabsList>
+  <TabsList className="grid w-full grid-cols-2">
+    <TabsTrigger
+      value="vendedores"
+      className="flex items-center justify-center p-2 rounded-lg transition-all duration-200 hover:bg-blue-100 hover:text-blue-700 focus:ring focus:ring-blue-300"
+    >
+      <Users className="mr-2 h-4 w-4" />
+      Vendedores
+    </TabsTrigger>
+    <TabsTrigger
+      value="repartidores"
+      className="flex items-center justify-center p-2 rounded-lg transition-all duration-200 hover:bg-green-100 hover:text-green-700 focus:ring focus:ring-green-300"
+    >
+      <Truck className="mr-2 h-4 w-4" />
+      Repartidores
+    </TabsTrigger>
+  </TabsList>
+
 
         <TabsContent value="vendedores">
           <Card>

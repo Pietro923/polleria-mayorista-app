@@ -90,9 +90,15 @@ export default function Inicio() {
 
   const roleConfig = roleConfigs[userRole || ""] || null;
 
+  const colorClasses: Record<string, string> = {
+    green: "text-green-600 bg-green-600 hover:bg-green-700",
+    purple: "text-purple-600 bg-purple-600 hover:bg-purple-700",
+    yellow: "text-yellow-600 bg-yellow-600 hover:bg-yellow-700",
+  };
+
   return (
-    <div className=" flex items-center justify-center p-4">
-      <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden">
+    <div className="flex items-center justify-center p-4">
+      <div className="bg-gray-100 w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden">
         <div className="p-6 bg-gradient-to-r from-blue-500 to-purple-600 text-white">
           <h1 className="text-3xl font-bold text-center">
             Bienvenido, <span>{userRole || "Cargando..."}</span>
@@ -106,10 +112,10 @@ export default function Inicio() {
           <div className="p-8">
             <div className="flex items-center mb-6">
               {React.createElement(roleConfig.icon, {
-                className: `mr-4 text-${roleConfig.color}-600`,
+                className: `${colorClasses[roleConfig.color].split(" ")[0]} mr-4`,
                 size: 40,
               })}
-              <h2 className={`text-2xl font-semibold text-${roleConfig.color}-600`}>
+              <h2 className={`text-2xl font-semibold ${colorClasses[roleConfig.color].split(" ")[0]}`}>
                 {roleConfig.title}
               </h2>
             </div>
@@ -119,7 +125,7 @@ export default function Inicio() {
                 <Button
                   key={index}
                   onClick={() => router.push(btn.path)}
-                  className={`w-full flex items-center justify-center space-x-2 bg-${roleConfig.color}-600 hover:bg-${roleConfig.color}-700 text-white`}
+                  className={`w-full flex items-center justify-center space-x-2 ${colorClasses[roleConfig.color]} text-white`}
                 >
                   <btn.icon size={20} />
                   <span>{btn.label}</span>

@@ -184,7 +184,6 @@ export default function VentasPage() {
       setVendedor("");
       setPrecioProducto(0);
 
-      alert("Venta registrada exitosamente");
       
     } catch (error) {
       console.error("Error al registrar la venta: ", error);

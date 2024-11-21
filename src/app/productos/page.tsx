@@ -327,7 +327,7 @@ export default function ProductosPage() {
       </div>
 
       <AlertDialog open={showAlert} onOpenChange={setShowAlert}>
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-white">
           <AlertDialogHeader>
             <AlertDialogTitle>¡Producto Agregado!</AlertDialogTitle>
             <AlertDialogDescription>
