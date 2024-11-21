@@ -14,7 +14,7 @@ export default function NewOrderForm() {
   const [cliente, setCliente] = useState("");
   const [producto, setProducto] = useState("");
   const [cantidad, setCantidad] = useState(1);
-  const [fechaEntrega, setFechaEntrega] = useState("");
+  const [fechaEntrega, setFechaEntrega] = useState(new Date().toISOString().split('T')[0]);
   const [clientes, setClientes] = useState<any[]>([]);
   const [productos, setProductos] = useState<any[]>([]);
   const [direccionCliente, setDireccionCliente] = useState(""); // Estado para la dirección del cliente
@@ -112,6 +112,24 @@ export default function NewOrderForm() {
       setDireccionCliente(""); // Resetear la dirección
     } catch (error) {
       console.error("Error al registrar el pedido:", error);
+    }
+  };
+  // Función para validar la fecha
+  const isValidDate = (date: string): boolean => {
+    const selectedDate = new Date(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return selectedDate >= today;
+  };
+
+  // Handler para cambio de fecha con validación
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newDate = e.target.value;
+    if (!isValidDate(newDate)) {
+      // Establecer la fecha actual como valor por defecto
+      setFechaEntrega(new Date().toISOString().split('T')[0]);
+    } else {
+      setFechaEntrega(newDate);
     }
   };
 
@@ -238,16 +256,18 @@ export default function NewOrderForm() {
                   Fecha de Entrega
                 </Label>
                 <div className="relative">
-                  <Input
-                    id="fechaEntrega"
-                    type="date"
-                    value={fechaEntrega}
-                    onChange={(e) => setFechaEntrega(e.target.value)}
-                    required
-                    className="h-11 pl-10"
-                  />
-                  <Calendar className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                </div>
+                <Input
+                  id="fechaEntrega"
+                  type="date"
+                  value={fechaEntrega}
+                  onChange={handleDateChange} // Solo un manejador de eventos
+                  min={new Date().toISOString().split('T')[0]}
+                  required
+                  className="h-11 pl-10"
+                />
+                <Calendar className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+              </div>
+
               </div>
             </div>
 

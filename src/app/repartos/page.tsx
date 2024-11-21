@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, ChangeEvent } from "react";
 import dynamic from "next/dynamic";
 import L, { LatLngExpression } from "leaflet";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
@@ -267,6 +267,27 @@ export default function RepartoForm() {
     URL.revokeObjectURL(url);
   };
 
+   // Función para validar la fecha
+   const isValidDate = (date: string): boolean => {
+    const selectedDate = new Date(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return selectedDate >= today;
+  };
+
+  // Handler para cambio de fecha con validación
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newDate = e.target.value;
+    if (!isValidDate(newDate)) {
+      setErrorMessage("No se puede seleccionar una fecha anterior al día actual");
+      setShowErrorDialog(true);
+      // Establecer la fecha actual como valor por defecto
+      setFechaEntrega(new Date().toISOString().split('T')[0]);
+    } else {
+      setFechaEntrega(newDate);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">
       <div className="grid md:grid-cols-2 gap-6">
@@ -322,15 +343,17 @@ export default function RepartoForm() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Fecha de Entrega</Label>
-                <Input
-                  type="date"
-                  value={fechaEntrega}
-                  onChange={(e) => setFechaEntrega(e.target.value)}
-                  className="w-full"
-                />
-              </div>
+              {/* Actualizar el input de fecha en el formulario */}
+      <div className="space-y-2">
+        <Label className="text-sm font-medium">Fecha de Entrega</Label>
+        <Input
+          type="date"
+          value={fechaEntrega}
+          onChange={handleDateChange}
+          min={new Date().toISOString().split('T')[0]}
+          className="w-full"
+        />
+      </div>
 
               <Button type="submit" className="w-full">
                 Registrar Entrega
@@ -349,7 +372,7 @@ export default function RepartoForm() {
         </Card>
 
         {/* Mapa */}
-        <Card className="shadow-lg">
+        <Card className="shadow-lg z-0">
           <CardHeader>
             <h2 className="text-2xl font-bold tracking-tight">Ubicaciones de Reparto</h2>
           </CardHeader>
@@ -413,3 +436,11 @@ export default function RepartoForm() {
     </div>
   );
 }
+function setErrorMessage(arg0: string) {
+  throw new Error("Function not implemented.");
+}
+
+function setShowErrorDialog(arg0: boolean) {
+  throw new Error("Function not implemented.");
+}
+
