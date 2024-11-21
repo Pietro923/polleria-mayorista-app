@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { db } from "@/lib/firebaseConfig"; // Importa la configuración de Firebase
 import { collection, getDocs, doc, getDoc, setDoc, updateDoc, deleteDoc, increment } from "firebase/firestore";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Users, UserPlus, Mail, Phone, MapPin, Edit2, Trash2, User, Save } from "lucide-react";
 
 // Definir la interfaz Cliente
 interface Cliente {
@@ -150,95 +151,183 @@ export default function ClientesPage() {
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Clientes</h1>
+    <div className="max-w-7xl mx-auto p-6 space-y-8">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <Users className="w-8 h-8 text-primary" />
+          <h1 className="text-3xl font-bold tracking-tight">Gestión de Clientes</h1>
+        </div>
+      </div>
 
-      <Card className="mb-8">
-        <CardHeader>
-          <h2 className="text-xl font-semibold">{clienteEditado ? "Editar Cliente" : "Agregar Cliente"}</h2>
+      <Card className="border-2 border-gray-100">
+        <CardHeader className="border-b bg-gray-50/50">
+          <div className="flex items-center space-x-2">
+            {clienteEditado ? <Edit2 className="w-5 h-5" /> : <UserPlus className="w-5 h-5" />}
+            <h2 className="text-2xl font-semibold">
+              {clienteEditado ? "Editar Cliente" : "Agregar Cliente"}
+            </h2>
+          </div>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={clienteEditado ? guardarCambios : agregarCliente}>
-            <div className="mb-4">
-              <Label htmlFor="nombreCliente">Nombre del Cliente</Label>
-              <Input
-                id="nombreCliente"
-                value={nombreCliente}
-                onChange={(e) => setNombreCliente(e.target.value)}
-                required
-              />
+        <CardContent className="pt-6">
+          <form onSubmit={clienteEditado ? guardarCambios : agregarCliente} className="space-y-6">
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="nombreCliente" className="text-sm font-medium">
+                  Nombre del Cliente
+                </Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                  <Input
+                    id="nombreCliente"
+                    value={nombreCliente}
+                    onChange={(e) => setNombreCliente(e.target.value)}
+                    className="pl-10 focus-visible:ring-primary"
+                    required
+                    placeholder="Nombre completo"
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="emailCliente" className="text-sm font-medium">
+                  Email del Cliente
+                </Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                  <Input
+                    id="emailCliente"
+                    type="email"
+                    value={emailCliente}
+                    onChange={(e) => setEmailCliente(e.target.value)}
+                    className="pl-10 focus-visible:ring-primary"
+                    required
+                    placeholder="correo@ejemplo.com"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="telefonoCliente" className="text-sm font-medium">
+                  Teléfono del Cliente
+                </Label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                  <Input
+                    id="telefonoCliente"
+                    value={telefonoCliente}
+                    onChange={(e) => setTelefonoCliente(e.target.value)}
+                    className="pl-10 focus-visible:ring-primary"
+                    required
+                    placeholder="+1 234 567 890"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="direccionCliente" className="text-sm font-medium">
+                  Dirección del Cliente
+                </Label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                  <Input
+                    id="direccionCliente"
+                    value={direccionCliente}
+                    onChange={(e) => setDireccionCliente(e.target.value)}
+                    className="pl-10 focus-visible:ring-primary"
+                    required
+                    placeholder="Dirección completa"
+                  />
+                </div>
+              </div>
             </div>
-            <div className="mb-4">
-              <Label htmlFor="emailCliente">Email del Cliente</Label>
-              <Input
-                id="emailCliente"
-                type="email"
-                value={emailCliente}
-                onChange={(e) => setEmailCliente(e.target.value)}
-                required
-              />
-            </div>
-            <div className="mb-4">
-              <Label htmlFor="telefonoCliente">Teléfono del Cliente</Label>
-              <Input
-                id="telefonoCliente"
-                value={telefonoCliente}
-                onChange={(e) => setTelefonoCliente(e.target.value)}
-                required
-              />
-            </div>
-            <div className="mb-4">
-              <Label htmlFor="direccionCliente">Dirección del Cliente</Label>
-              <Input
-                id="direccionCliente"
-                value={direccionCliente}
-                onChange={(e) => setDireccionCliente(e.target.value)}
-                required
-              />
-            </div>
-            <Button type="submit">{clienteEditado ? "Guardar Cambios" : "Agregar Cliente"}</Button>
+
+            <Button 
+              type="submit" 
+              className="w-full gap-2 text-base"
+            >
+              {clienteEditado ? (
+                <>
+                  <Save className="w-4 h-4" />
+                  Guardar Cambios
+                </>
+              ) : (
+                <>
+                  <UserPlus className="w-4 h-4" />
+                  Agregar Cliente
+                </>
+              )}
+            </Button>
           </form>
         </CardContent>
       </Card>
 
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Lista de Clientes</h2>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold">Lista de Clientes</h2>
+          <div className="h-1 flex-1 mx-4 bg-gradient-to-r from-primary/20 to-transparent" />
+        </div>
+
         {clientes.length > 0 ? (
-          <div className="space-y-4">
+          <div className="grid gap-4">
             {clientes.map((cliente, index) => (
               <div
                 key={cliente.id}
-                className="flex items-center justify-between p-4 bg-white shadow-md rounded-md border border-gray-200"
+                className="group relative bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-300"
               >
-                <div className="flex-1">
-                  <p className="text-lg font-medium">{cliente.nombreCliente}</p>
-                  <p className="text-sm text-gray-600">Email: {cliente.emailCliente}</p>
-                  <p className="text-sm text-gray-600">Teléfono: {cliente.telefonoCliente}</p>
-                  <p className="text-sm text-gray-600">Dirección: {cliente.direccionCliente}</p>
-                </div>
-                <div className="flex space-x-2">
-                  <Button
-                    variant="secondary"
-                    className="text-sm"
-                    onClick={() => editarCliente(index)}
-                  >
-                    Editar
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    className="text-sm"
-                    onClick={() => eliminarCliente(index)}
-                  >
-                    Borrar
-                  </Button>
+                <div className="grid grid-cols-[1fr,auto] gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-900">
+                        {cliente.nombreCliente}
+                      </h3>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="flex items-center space-x-2 text-gray-600">
+                        <Mail className="w-4 h-4" />
+                        <span className="text-sm">{cliente.emailCliente}</span>
+                      </div>
+                      <div className="flex items-center space-x-2 text-gray-600">
+                        <Phone className="w-4 h-4" />
+                        <span className="text-sm">{cliente.telefonoCliente}</span>
+                      </div>
+                      <div className="flex items-center space-x-2 text-gray-600">
+                        <MapPin className="w-4 h-4" />
+                        <span className="text-sm">{cliente.direccionCliente}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => editarCliente(index)}
+                      className="gap-1"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                      Editar
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => eliminarCliente(index)}
+                      className="gap-1"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Eliminar
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-gray-500">No hay clientes disponibles.</p>
+          <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed">
+            <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500 text-lg">No hay clientes disponibles.</p>
+          </div>
         )}
       </div>
     </div>
   );
-}
+};

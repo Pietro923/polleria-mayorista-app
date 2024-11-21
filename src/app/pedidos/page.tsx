@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { db } from "@/lib/firebaseConfig"; // Importar la configuración de Firebase
 import { collection, getDocs, getDoc, doc, setDoc, updateDoc, increment } from "firebase/firestore";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar, Package, User, Hash, Truck, ShoppingCart } from "lucide-react";
 
 export default function NewOrderForm() {
   const [cliente, setCliente] = useState("");
@@ -115,82 +116,157 @@ export default function NewOrderForm() {
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Registrar Pedido</h1>
+    <div className="max-w-4xl mx-auto p-6 space-y-8">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <div className="p-2 bg-primary/10 rounded-xl">
+            <ShoppingCart className="w-8 h-8 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Registrar Pedido</h1>
+            <p className="text-gray-500">Crea y gestiona nuevos pedidos de clientes</p>
+          </div>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <h2 className="text-xl font-semibold">Nuevo Pedido</h2>
+      <Card className="border-2 border-gray-100">
+        <CardHeader className="border-b bg-gray-50/50 space-y-1">
+          <div className="flex items-center space-x-2">
+            <Package className="w-5 h-5 text-primary" />
+            <h2 className="text-2xl font-semibold">Nuevo Pedido</h2>
+          </div>
+          <p className="text-sm text-gray-500">Complete los detalles del pedido</p>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="cliente">Cliente:</Label>
-              <Select
-                onValueChange={handleClienteChange} // Usar la función modificada
-                value={cliente}
-                required
+        <CardContent className="pt-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid gap-6 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label 
+                  htmlFor="cliente" 
+                  className="text-sm font-medium flex items-center gap-2"
+                >
+                  <User className="w-4 h-4 text-gray-500" />
+                  Cliente
+                </Label>
+                <Select
+                  onValueChange={handleClienteChange}
+                  value={cliente}
+                  required
+                >
+                  <SelectTrigger id="cliente" className="h-11">
+                    <SelectValue placeholder="Seleccionar cliente" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <div className="p-2">
+                      <h4 className="mb-2 text-sm font-medium text-gray-500">Clientes Disponibles</h4>
+                      {clientes.map((cliente, index) => (
+                        <SelectItem 
+                          key={index} 
+                          value={cliente.nombreCliente}
+                          className="cursor-pointer hover:bg-gray-50 rounded-md transition-colors"
+                        >
+                          {cliente.nombreCliente}
+                        </SelectItem>
+                      ))}
+                    </div>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label 
+                  htmlFor="producto" 
+                  className="text-sm font-medium flex items-center gap-2"
+                >
+                  <Package className="w-4 h-4 text-gray-500" />
+                  Producto
+                </Label>
+                <Select
+                  onValueChange={(value) => setProducto(value)}
+                  value={producto}
+                  required
+                >
+                  <SelectTrigger id="producto" className="h-11">
+                    <SelectValue placeholder="Seleccionar producto" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <div className="p-2">
+                      <h4 className="mb-2 text-sm font-medium text-gray-500">Productos Disponibles</h4>
+                      {productos.map((producto, index) => (
+                        <SelectItem 
+                          key={index} 
+                          value={producto.nombre}
+                          className="cursor-pointer hover:bg-gray-50 rounded-md transition-colors"
+                        >
+                          {producto.nombre}
+                        </SelectItem>
+                      ))}
+                    </div>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label 
+                  htmlFor="cantidad" 
+                  className="text-sm font-medium flex items-center gap-2"
+                >
+                  <Hash className="w-4 h-4 text-gray-500" />
+                  Cantidad
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="cantidad"
+                    type="number"
+                    value={cantidad}
+                    onChange={(e) => setCantidad(Number(e.target.value))}
+                    min="1"
+                    required
+                    className="h-11 pl-10"
+                    placeholder="Ingrese la cantidad"
+                  />
+                  <Hash className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label 
+                  htmlFor="fechaEntrega" 
+                  className="text-sm font-medium flex items-center gap-2"
+                >
+                  <Calendar className="w-4 h-4 text-gray-500" />
+                  Fecha de Entrega
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="fechaEntrega"
+                    type="date"
+                    value={fechaEntrega}
+                    onChange={(e) => setFechaEntrega(e.target.value)}
+                    required
+                    className="h-11 pl-10"
+                  />
+                  <Calendar className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t">
+              <Button 
+                type="submit" 
+                className="w-full h-11 text-base gap-2"
               >
-                <SelectTrigger id="cliente">
-                  <SelectValue placeholder="Seleccionar cliente" />
-                </SelectTrigger>
-                <SelectContent>
-                  {clientes.map((cliente, index) => (
-                    <SelectItem key={index} value={cliente.nombreCliente}>
-                      {cliente.nombreCliente}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <Truck className="w-5 h-5" />
+                Registrar Pedido
+              </Button>
             </div>
-
-            <div>
-              <Label htmlFor="producto">Producto:</Label>
-              <Select
-                onValueChange={(value) => setProducto(value)}
-                value={producto}
-                required
-              >
-                <SelectTrigger id="producto">
-                  <SelectValue placeholder="Seleccionar producto" />
-                </SelectTrigger>
-                <SelectContent>
-                  {productos.map((producto, index) => (
-                    <SelectItem key={index} value={producto.nombre}>
-                      {producto.nombre}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="cantidad">Cantidad:</Label>
-              <Input
-                id="cantidad"
-                type="number"
-                value={cantidad}
-                onChange={(e) => setCantidad(Number(e.target.value))}
-                min="1"
-                required
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="fechaEntrega">Fecha de Entrega:</Label>
-              <Input
-                id="fechaEntrega"
-                type="date"
-                value={fechaEntrega}
-                onChange={(e) => setFechaEntrega(e.target.value)}
-                required
-              />
-            </div>
-
-            <Button type="submit">Registrar Pedido</Button>
           </form>
         </CardContent>
       </Card>
+
+      <div className="text-center text-sm text-gray-500">
+        <p>Todos los pedidos serán procesados en el horario laboral</p>
+      </div>
     </div>
   );
-}
+};

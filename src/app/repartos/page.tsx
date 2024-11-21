@@ -1,15 +1,15 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
 import dynamic from "next/dynamic";
 import L, { LatLngExpression } from "leaflet";
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import "leaflet/dist/leaflet.css"; 
+import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 // Firebase
 import { collection, addDoc, getDocs, query } from "firebase/firestore";
@@ -267,110 +267,146 @@ export default function RepartoForm() {
   };
 
   return (
-    <div className="grid gap-4">
-      <Card>
-        <CardHeader>
-          <h2>Registro de Reparto</h2>
+    <div className="max-w-7xl mx-auto p-6 space-y-6">
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Formulario de Registro */}
+        <Card className="shadow-lg">
+          <CardHeader className="space-y-1">
+            <h2 className="text-2xl font-bold tracking-tight">Registro de Reparto</h2>
+            <p className="text-sm text-muted-foreground">
+              Ingresa los detalles del nuevo reparto
+            </p>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Repartidor</Label>
+                <Select value={repartidor} onValueChange={setRepartidor}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Selecciona un repartidor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {repartidores.map((repartidor) => (
+                      <SelectItem key={repartidor} value={repartidor}>
+                        {repartidor}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Pedido</Label>
+                <Select value={pedidoSeleccionado?.id || ""} onValueChange={handlePedidoSelect}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Selecciona un pedido" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {pedidos.map((pedido) => (
+                      <SelectItem key={pedido.id} value={pedido.id}>
+                        {pedido.cliente} - {pedido.producto}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Dirección</Label>
+                <Input
+                  value={direccion}
+                  onChange={(e) => setDireccion(e.target.value)}
+                  placeholder="Dirección de entrega"
+                  className="w-full"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Fecha de Entrega</Label>
+                <Input
+                  type="date"
+                  value={fechaEntrega}
+                  onChange={(e) => setFechaEntrega(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+
+              <Button type="submit" className="w-full">
+                Registrar Entrega
+              </Button>
+            </form>
+          </CardContent>
+          <CardFooter className="flex justify-end">
+            <Button 
+              onClick={handleDownloadPDF}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              Descargar PDF
+            </Button>
+          </CardFooter>
+        </Card>
+
+        {/* Mapa */}
+        <Card className="shadow-lg">
+          <CardHeader>
+            <h2 className="text-2xl font-bold tracking-tight">Ubicaciones de Reparto</h2>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="h-[500px] rounded-md overflow-hidden">
+              <MapContainer 
+                center={position} 
+                zoom={13} 
+                className="h-full w-full"
+              >
+                <TileLayer
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                />
+                {ubicaciones.map((ubicacion, index) => (
+                  <Marker
+                    key={index}
+                    position={[ubicacion.lat, ubicacion.lon]}
+                    icon={customMarker}
+                  >
+                    <div>{`${ubicacion.repartidor} - ${ubicacion.direccion}`}</div>
+                  </Marker>
+                ))}
+              </MapContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Tabla de Repartos */}
+      <Card className="shadow-lg">
+        <CardHeader className="space-y-1">
+          <h2 className="text-2xl font-bold tracking-tight">Lista de Repartos</h2>
+          <p className="text-sm text-muted-foreground">
+            Historial de todos los repartos registrados
+          </p>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label>Repartidor</Label>
-              <Select value={repartidor} onValueChange={setRepartidor}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona un repartidor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {repartidores.map((repartidor) => (
-                    <SelectItem key={repartidor} value={repartidor}>
-                      {repartidor}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label>Pedido</Label>
-              <Select value={pedidoSeleccionado?.id || ""} onValueChange={handlePedidoSelect}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona un pedido" />
-                </SelectTrigger>
-                <SelectContent>
-                  {pedidos.map((pedido) => (
-                    <SelectItem key={pedido.id} value={pedido.id}>
-                      {pedido.cliente} - {pedido.producto}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label>Dirección</Label>
-              <Input
-                value={direccion}
-                onChange={(e) => setDireccion(e.target.value)}
-                placeholder="Dirección de entrega"
-              />
-            </div>
-
-            <div>
-              <Label>Fecha de Entrega</Label>
-              <Input
-                type="date"
-                value={fechaEntrega}
-                onChange={(e) => setFechaEntrega(e.target.value)}
-              />
-            </div>
-
-            <Button type="submit">Registrar Entrega</Button>
-          </form>
-        </CardContent>
-        <CardFooter>
-          <Button onClick={handleDownloadPDF}>Descargar PDF</Button>
-        </CardFooter>
-      </Card>
-
-      <MapContainer center={position} zoom={13} style={{ height: "500px" }}>
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        />
-        {ubicaciones.map((ubicacion, index) => (
-          <Marker
-            key={index}
-            position={[ubicacion.lat, ubicacion.lon]}
-            icon={customMarker}
-          >
-            <div>{`${ubicacion.repartidor} - ${ubicacion.direccion}`}</div>
-          </Marker>
-        ))}
-      </MapContainer>
-
-      <Card>
-        <CardHeader>
-          <h2>Lista de Repartos</h2>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Repartidor</TableHead>
-                <TableHead>Dirección</TableHead>
-                <TableHead>Fecha de Entrega</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {ubicaciones.map((ubicacion, index) => (
-                <TableRow key={index}>
-                  <TableCell>{ubicacion.repartidor}</TableCell>
-                  <TableCell>{ubicacion.direccion}</TableCell>
-                  <TableCell>{ubicacion.fechaEntrega}</TableCell>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="font-semibold">Repartidor</TableHead>
+                  <TableHead className="font-semibold">Dirección</TableHead>
+                  <TableHead className="font-semibold">Fecha de Entrega</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {ubicaciones.map((ubicacion, index) => (
+                  <TableRow key={index}>
+                    <TableCell className="font-medium">{ubicacion.repartidor}</TableCell>
+                    <TableCell>{ubicacion.direccion}</TableCell>
+                    <TableCell>{ubicacion.fechaEntrega}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

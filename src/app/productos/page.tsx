@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { db } from "@/lib/firebaseConfig"; // Importa la configuración de Firebase
 import { collection, getDocs, doc, getDoc, setDoc, updateDoc, deleteDoc, increment } from "firebase/firestore";
-import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from "@/components/ui/alert-dialog";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel } from "@/components/ui/alert-dialog";
+import { PackageSearch, Edit2, Trash2, Plus, Save } from "lucide-react";
 
 // Definir la interfaz Producto
 interface Producto {
@@ -163,135 +164,178 @@ export default function ProductosPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
-      <h1 className="text-3xl font-semibold text-gray-900 mb-8">Gestión de Productos</h1>
+    <div className="max-w-7xl mx-auto p-6 space-y-8">
+      <div className="flex items-center space-x-4">
+        <PackageSearch className="w-8 h-8 text-primary" />
+        <h1 className="text-3xl font-bold tracking-tight">Gestión de Productos</h1>
+      </div>
 
-      <Card className="shadow-lg rounded-lg p-6 mb-8 bg-gray-50">
-        <CardHeader>
-          <h2 className="text-2xl font-medium text-gray-800">{productoEditado ? "Editar Producto" : "Agregar Producto"}</h2>
+      <Card className="border-2 border-gray-100">
+        <CardHeader className="border-b bg-gray-50/50">
+          <div className="flex items-center space-x-2">
+            {productoEditado ? <Edit2 className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+            <h2 className="text-2xl font-semibold">
+              {productoEditado ? "Editar Producto" : "Agregar Producto"}
+            </h2>
+          </div>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={productoEditado ? guardarCambios : agregarProducto} className="space-y-6">
-            <div className="mb-4">
-              <Label htmlFor="nombreProducto" className="text-sm font-medium">Nombre del Producto</Label>
-              <Input
-                id="nombreProducto"
-                value={nombreProducto}
-                onChange={(e) => setNombreProducto(e.target.value)}
-                required
-                className="mt-1"
-              />
+        <CardContent className="pt-6">
+          <form onSubmit={productoEditado ? guardarCambios : agregarProducto} className="space-y-5">
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="nombreProducto">Nombre del Producto</Label>
+                <Input
+                  id="nombreProducto"
+                  value={nombreProducto}
+                  onChange={(e) => setNombreProducto(e.target.value)}
+                  required
+                  className="focus-visible:ring-primary"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="descripcionProducto">Descripción</Label>
+                <Input
+                  id="descripcionProducto"
+                  value={descripcionProducto}
+                  onChange={(e) => setDescripcionProducto(e.target.value)}
+                  required
+                  className="focus-visible:ring-primary"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="precioProducto">Precio ($)</Label>
+                <Input
+                  id="precioProducto"
+                  type="number"
+                  value={precioProducto}
+                  onChange={(e) => setPrecioProducto(Number(e.target.value))}
+                  required
+                  className="focus-visible:ring-primary"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cantidadProducto">Cantidad</Label>
+                <Input
+                  id="cantidadProducto"
+                  type="number"
+                  value={cantidadProducto}
+                  onChange={(e) => setCantidadProducto(Number(e.target.value))}
+                  required
+                  min={1}
+                  className="focus-visible:ring-primary"
+                />
+              </div>
             </div>
-            <div className="mb-4">
-              <Label htmlFor="descripcionProducto" className="text-sm font-medium">Descripción del Producto</Label>
-              <Input
-                id="descripcionProducto"
-                value={descripcionProducto}
-                onChange={(e) => setDescripcionProducto(e.target.value)}
-                required
-                className="mt-1"
-              />
-            </div>
-            <div className="mb-4">
-              <Label htmlFor="precioProducto" className="text-sm font-medium">Precio del Producto</Label>
-              <Input
-                id="precioProducto"
-                type="number"
-                value={precioProducto}
-                onChange={(e) => setPrecioProducto(Number(e.target.value))}
-                required
-                className="mt-1"
-              />
-            </div>
-            <div className="mb-4">
-              <Label htmlFor="cantidadProducto" className="text-sm font-medium">Cantidad del Producto</Label>
-              <Input
-                id="cantidadProducto"
-                type="number"
-                value={cantidadProducto}
-                onChange={(e) => setCantidadProducto(Number(e.target.value))}
-                required
-                className="mt-1"
-                min={1}
-              />
-            </div>
-            <div className="mb-4">
-              <Label htmlFor="imagenUrlProducto" className="text-sm font-medium">URL de Imagen del Producto</Label>
+            <div className="space-y-2">
+              <Label htmlFor="imagenUrlProducto">URL de Imagen</Label>
               <Input
                 id="imagenUrlProducto"
                 value={imagenUrlProducto}
                 onChange={(e) => setImagenUrlProducto(e.target.value)}
                 required
-                className="mt-1"
+                className="focus-visible:ring-primary"
               />
             </div>
-            <Button type="submit" className="w-full py-2">{productoEditado ? "Guardar Cambios" : "Agregar Producto"}</Button>
+            <Button 
+              type="submit" 
+              className="w-full gap-2 text-base"
+            >
+              {productoEditado ? (
+                <>
+                  <Save className="w-4 h-4" />
+                  Guardar Cambios
+                </>
+              ) : (
+                <>
+                  <Plus className="w-4 h-4" />
+                  Agregar Producto
+                </>
+              )}
+            </Button>
           </form>
         </CardContent>
       </Card>
 
-      <div>
-  <h2 className="text-3xl font-bold text-gray-900 mb-8">Lista de Productos</h2>
-  {productos.length > 0 ? (
-    <div className="space-y-8">
-      {productos.map((producto) => (
-        <div
-          key={producto.id}
-          className="flex items-center justify-between p-8 bg-white shadow-xl rounded-3xl border border-gray-200 hover:shadow-2xl transition-shadow duration-300"
-        >
-          <div className="flex-1 pr-8">
-            <p className="text-2xl font-semibold text-gray-800">{producto.nombre}</p>
-            <p className="text-lg text-gray-600 mt-2">Descripción: {producto.descripcion}</p>
-            <p className="text-lg text-gray-600 mt-2">Precio: <span className="font-bold text-gray-800">${producto.precio}</span></p>
-            <p className="text-lg text-gray-600 mt-2">Cantidad <span className="font-bold text-gray-800">{producto.cantidad}</span></p>
-          </div>
-          <div className="flex-shrink-0">
-            {producto.imagenUrl && (
-              <img
-                src={producto.imagenUrl}
-                alt={producto.nombre}
-                className="w-48 h-48 object-cover rounded-2xl shadow-lg border-4 border-gray-100"
-              />
-            )}
-          </div>
-          <div className="flex space-x-4 ml-6">
-            <Button
-              variant="secondary"
-              className="text-lg px-8 py-4 bg-gray-200 hover:bg-gray-300 rounded-xl transition-colors"
-              onClick={() => editarProducto(productos.indexOf(producto))}
-            >
-              Editar
-            </Button>
-            <Button
-              variant="destructive"
-              className="text-lg px-8 py-4 bg-red-500 hover:bg-red-600 rounded-xl text-white transition-colors"
-              onClick={() => eliminarProducto(productos.indexOf(producto))}
-            >
-              Eliminar
-            </Button>
-          </div>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold">Lista de Productos</h2>
+          <div className="h-1 flex-1 mx-4 bg-gradient-to-r from-primary/20 to-transparent" />
         </div>
-      ))}
-    </div>
-  ) : (
-    <p className="text-gray-500 text-xl">No hay productos disponibles.</p>
-  )}
-</div>
 
-      {/* AlertDialog cuando el producto ha sido agregado correctamente */}
+        {productos.length > 0 ? (
+          <div className="grid gap-6">
+            {productos.map((producto, index) => (
+              <div
+                key={producto.id}
+                className="group relative bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-300"
+              >
+                <div className="flex items-start gap-6">
+                  <div className="flex-1 space-y-4">
+                    <div className="space-y-1">
+                      <h3 className="text-xl font-semibold text-gray-900">{producto.nombre}</h3>
+                      <p className="text-gray-600">{producto.descripcion}</p>
+                    </div>
+                    <div className="flex gap-4">
+                      <div className="px-3 py-1 rounded-lg bg-primary/10 text-primary font-medium">
+                        ${producto.precio}
+                      </div>
+                      <div className="px-3 py-1 rounded-lg bg-gray-100 text-gray-700 font-medium">
+                        Stock: {producto.cantidad}
+                      </div>
+                    </div>
+                  </div>
+
+                  {producto.imagenUrl && (
+                    <div className="relative flex-shrink-0">
+                      <img
+                        src={producto.imagenUrl}
+                        alt={producto.nombre}
+                        className="w-32 h-32 object-cover rounded-lg shadow-sm"
+                      />
+                    </div>
+                  )}
+
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute right-4 top-4 flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => editarProducto(index)}
+                      className="gap-1"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                      Editar
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => eliminarProducto(index)}
+                      className="gap-1"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Eliminar
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed">
+            <p className="text-gray-500 text-lg">No hay productos disponibles.</p>
+          </div>
+        )}
+      </div>
+
       <AlertDialog open={showAlert} onOpenChange={setShowAlert}>
-        <AlertDialogContent className="bg-white">
+        <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Producto Agregado</AlertDialogTitle>
+            <AlertDialogTitle>¡Producto Agregado!</AlertDialogTitle>
             <AlertDialogDescription>
-              El producto ha sido agregado correctamente.
+              El producto ha sido agregado correctamente al inventario.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="flex justify-end space-x-2 mt-4">
-            <AlertDialogCancel
-              onClick={() => setShowAlert(false)}
-              className="bg-red-600 text-black hover:bg-red-400"
-            >
+          <div className="flex justify-end">
+            <AlertDialogCancel onClick={() => setShowAlert(false)}>
               Cerrar
             </AlertDialogCancel>
           </div>
@@ -299,4 +343,4 @@ export default function ProductosPage() {
       </AlertDialog>
     </div>
   );
-}
+};
